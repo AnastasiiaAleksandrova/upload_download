@@ -1,6 +1,9 @@
 import React, { Component } from 'react';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDownload } from '@fortawesome/free-solid-svg-icons'
+import { faTrashAlt } from '@fortawesome/free-solid-svg-icons'
 import './App.css';
 
 class App extends Component {
@@ -15,6 +18,7 @@ class App extends Component {
     this.updateFilesList = this.updateFilesList.bind(this);
     this.handleUpload = this.handleUpload.bind(this);
     this.handleUpload = this.handleUpload.bind(this);
+    this.handleDelete = this.handleDelete.bind(this);
   }
 
   updateFilesList() { 
@@ -33,7 +37,7 @@ class App extends Component {
     try {
       let res = await fetch('/upload', {
         body: data,
-        method: "post"
+        method: 'post'
       })
       
       if (res.status === 200) {
@@ -54,8 +58,22 @@ class App extends Component {
 
   handleDownload(file) {
     window.open(`/download/${file}`);
-    //fetch(`/download/${file}`)
   }
+
+  async handleDelete(file) {
+    try {
+      let res = await fetch(`/upload/${file}`, {
+        method: 'delete'
+      });
+      if (res.status === 204) {
+        this.updateFilesList();
+      } else {
+        console.log('no')
+      }
+    } catch(err) {
+      console.log(err);
+    } 
+  };
 
   componentDidMount() {
     this.updateFilesList();
@@ -63,14 +81,24 @@ class App extends Component {
 
   render() {
     return (
-      <div className="container">
+      <div className='container'>
         <input style={{ margin: '1em .3em'}} type="file" onChange={this.handleUpload}></input>     
         
         {this.state.uploaded.map((item, index) =>
+
           <Card key={index} style={{ margin: '.3em', padding: '.3em' }}>
+
             <Card.Text>{item}</Card.Text>
-            <Button style={{width: '1em'}} onClick={() => this.handleDownload(item)}></Button>
-            {/* <Button style={{width: '1em'}} onClick={() => this.handleDownload()}></Button> */}
+
+            <div className='buttons'>
+              <Button variant='light' onClick={() => this.handleDownload(item)}>
+                <FontAwesomeIcon icon={faDownload}/>
+              </Button>
+              <Button variant='light' onClick={() => this.handleDelete(item)}>
+                <FontAwesomeIcon icon={faTrashAlt}/>
+              </Button>
+            </div>
+
           </Card>)}
     
       </div>

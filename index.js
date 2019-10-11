@@ -30,7 +30,6 @@ app.post('/upload', (req, res) => {
         }
         console.log("OK")
     });
-    //res.status(200);
     res.sendStatus(200);
 });
 
@@ -38,6 +37,14 @@ app.get('/upload', (req, res) => {
     fs.readdir('./uploads', (err, files) => {
         res.send(files);
      });
+});
+
+app.delete('/upload/:file', (req, res) => {
+    const file = path.join(__dirname, 'uploads', req.params.file);
+    fs.unlink(file, function() {
+        res.sendStatus(204);
+    });
+   
 });
 
 app.get('/download/:file', (req, res) => {

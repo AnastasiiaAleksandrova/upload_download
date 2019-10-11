@@ -1,9 +1,11 @@
 import React, { Component } from 'react';
 import Card from 'react-bootstrap/Card';
 import Button from 'react-bootstrap/Button';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDownload } from '@fortawesome/free-solid-svg-icons'
-import { faTrashAlt } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import ProgressBar from 'react-bootstrap/ProgressBar';
+import axios from 'axios';
 import './App.css';
 
 class App extends Component {
@@ -11,7 +13,8 @@ class App extends Component {
   constructor() {
     super();
     this.state = {
-      uploaded: []
+      uploaded: [],
+      progress: 0
     };
 
     this.uploadFile = this.uploadFile.bind(this);
@@ -35,25 +38,30 @@ class App extends Component {
     const data = new FormData();
     data.append('file', file);
     try {
-      let res = await fetch('/upload', {
-        body: data,
-        method: 'post'
+      let res = await axios.post('/upload', data, {
+        onUploadProgress: e => this.setProgress(e.loaded / e.total * 100)
       })
-      
+
       if (res.status === 200) {
+        this.setProgress(100);
         console.log("getting files")
         this.updateFilesList();
+        setTimeout(() => this.setProgress(0), 500);
       } else {
         console.log("not ok")
       }
+
     } catch(err) {
       console.log(err);
     } 
-  };
+  }
+
+  setProgress(progress) {
+    this.setState({progress: progress});
+  }
 
   handleUpload(event) {
    this.uploadFile(event.target.files[0]);
-   //this.updateFilesList();
   };
 
   handleDownload(file) {
@@ -62,9 +70,7 @@ class App extends Component {
 
   async handleDelete(file) {
     try {
-      let res = await fetch(`/upload/${file}`, {
-        method: 'delete'
-      });
+      let res = await axios.delete(`/upload/${file}`);
       if (res.status === 204) {
         this.updateFilesList();
       } else {
@@ -80,9 +86,16 @@ class App extends Component {
   };
 
   render() {
+    let progressView = (this.state.progress > 0) 
+      ? (<ProgressBar variant="success" now={this.state.progress} />)
+      : "";
     return (
       <div className='container'>
-        <input style={{ margin: '1em .3em'}} type="file" onChange={this.handleUpload}></input>     
+       
+        <input style={{ margin: '1em .3em'}} type="file" onChange={this.handleUpload}></input> 
+        <div className='progressbar'>
+          {progressView}
+        </div>
         
         {this.state.uploaded.map((item, index) =>
 
@@ -90,11 +103,11 @@ class App extends Component {
 
             <Card.Text>{item}</Card.Text>
 
-            <div className='buttons'>
-              <Button variant='light' onClick={() => this.handleDownload(item)}>
+            <div className='buttons mr-auto'>
+              <Button variant='light' className='mx-1' onClick={() => this.handleDownload(item)}>
                 <FontAwesomeIcon icon={faDownload}/>
               </Button>
-              <Button variant='light' onClick={() => this.handleDelete(item)}>
+              <Button variant='light' className='mx-1' onClick={() => this.handleDelete(item)}>
                 <FontAwesomeIcon icon={faTrashAlt}/>
               </Button>
             </div>

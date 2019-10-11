@@ -2,3 +2,7 @@
     display: flex;
     justify-content: center;
 }
+
+.progressbar {
+    height: 3em;
+}

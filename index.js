@@ -16,7 +16,8 @@ const FILE_DIR = './uploads';
 const fileStorage = multer.diskStorage({
     destination: path.join(__dirname, FILE_DIR),
     filename: function (req, file, cb) {
-        let item = { id: req.params.id, name: file.originalname, tstamp: new Date().getTime()};
+        let item = { id: req.params.id, name: file.originalname, 
+            tstamp: new Date().getTime(), uploading: true};
         storage.set(item.id, item);
         cb(null, `${buildFileName(item.tstamp, req.params.id, file.originalname)}`);
       }
@@ -30,25 +31,28 @@ let storage = new Map();
         files.map(name => 
             ({ id: name.substring(13, 49), tstamp: name.substring(0, 13), name: name.substring(49) }) 
         ).forEach(item => {
-            filepool.set(item.id, item);
+            storage.set(item.id, item);
         });
     });
 }
 
 
 app.get('/files', (req, res) => {
-    res.send(Array.from(storage.values()));
+    res.send(Array.from(storage.values()).filter(item => !item.uploading));
     //res.sendStatus(500);  // ERROR TESTING
 });
 
 app.post('/file/:id', (req, res) => {
     let id = req.params.id;
     if (!storage.has(id)) { 
-    //if (!filepool.has(id) && false) {  // ERROR TESTING
+    //if (!storage.has(id) && false) {  // ERROR TESTING
         fileUpload(req, res, err => {
             if (!err) {
+                let item = storage.get(id);
+                item.uploading = false;
                 res.sendStatus(200);
             } else {
+                storage.delete(id);
                 res.sendStatus(500);
             } 
         })
